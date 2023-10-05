@@ -4,6 +4,7 @@
     import { initializeApp } from "firebase/app";
     import { getFirestore, collection, getDoc, setDoc, doc, Timestamp } from "firebase/firestore";
     import moment from 'moment-es6';
+    import { animateScroll } from 'svelte-scrollto-element'
 
     let gameData = {
         wordToGuess: "CRANE" /*example word. will fetch later.*/,
@@ -65,10 +66,6 @@
                 checkGuess();
             }
             if (e.key === "Backspace" && gameData.currentGuess.index >= 0) {
-                console.log(
-                    gameData.currentGuess.letters[gameData.currentGuess.index],
-                    gameData.currentGuess.index
-                );
                 gameData.currentGuess.letters[gameData.currentGuess.index - 1] =
                     { letter: "" };
                 if (!gameData.currentGuess.index == 0) {
@@ -81,14 +78,14 @@
                 return;
             } else if (
                 (e.keyCode >= 65 && e.keyCode <= 90) ||
-                (e.keyCode >= 97 && event.keyCode <= 122)
+                (e.keyCode >= 97 && e.keyCode <= 122)
             ) {
                 //alphabet!! woohoo!
                 if (gameData.currentGuess.index == 5) {
                     return;
                 } else {
                     gameData.currentGuess.letters[gameData.currentGuess.index] =
-                        { letter: e.key };
+                        { letter: e.key.toUpperCase() };
                     gameData.currentGuess.index += 1;
                 }
             }
@@ -117,49 +114,41 @@
             index: 0,
         },
         winner: false,
-    };
-    console.log(gameData)
     }
+}
     function random(minimum, maximum) {
         return Math.floor(Math.random() * (maximum - minimum + 1)) + minimum;
     }
     function checkGuess() {
-        console.log(gameData.wordToGuess)
         let word = "";
         let letters = [];
         let lettersToGuess = gameData.wordToGuess.split("");
-        let lying = random(0, 1); //if 0, no lie; if 1, lie
+        let lying = random(0, 2); //if 0, no lie; if 1, lie
         for (let i = 0; i < gameData.currentGuess.letters.length; i++) {
             let currentLetter =
                 gameData.currentGuess.letters[i].letter.toUpperCase();
             word += currentLetter;
             let state;
-            console.log(currentLetter, lettersToGuess[i]);
             if (currentLetter == lettersToGuess[i]) {
                 //currect placement
-                console.log("correct placement");
                 state = 2;
             } else if (
                 lettersToGuess.includes(currentLetter) &&
                 currentLetter != lettersToGuess[i]
             ) {
                 //incorrect placement, but it is in word
-                console.log("incorrect placement, but it is in word");
                 state = 1;
             } else {
                 //probably not at all in word
-                console.log("not at all in word");
                 state = 0;
             }
             letters.push({ letter: currentLetter, placement: i, state: state });
+            animateScroll.scrollToBottom()
         }
         //lie occasionally; except if it's right
-        if (lying && word != gameData.wordToGuess) {
+        if (lying == 1 && word != gameData.wordToGuess) {
             const index = random(0, 5);
             const state = random(0, 2);
-            console.log(
-                `lying. original: ${letters[index].state}. new: ${state}. letter ${letters[index].letter}`
-            );
             if (letters[index].state == state) {
                 //don't change
                 return;
@@ -230,7 +219,6 @@
         navigator.clipboard
             .writeText(string)
             .then((e) => {
-                console.log("success ", e);
                 return string;
             })
             .catch((err) => {
@@ -242,22 +230,24 @@
 {#each [...gameData.guesses].reverse() as guess}
     <div id={guess.word} class="prevGuess">
         {#each guess.letters as letter}
-            {#if letter.state == 1}
+            <div id="letterPrevContainer">
+                {#if letter.state == 1}
                 <p class="letterPrev" style="color:rgb(209, 141, 31)">
                     {letter.letter}
                 </p>
-            {:else if letter.state == 2}
-                <p class="letterPrev" style="color:green">{letter.letter}</p>
-            {:else}
-                <p class="letterPrev">{letter.letter}</p>
-            {/if}
+                {:else if letter.state == 2}
+                    <p class="letterPrev" style="color:rgb(107, 202, 107)">{letter.letter}</p>
+                {:else}
+                    <p class="letterPrev">{letter.letter}</p>
+                {/if}
+            </div>
         {/each}
     </div>
 {/each}
 {#if !gameData.winner}
     <div class="currentGuessBoxes">
         {#each gameData.currentGuess.letters as letter}
-            <div class="guess-box">{letter.letter}</div>
+            <div id="guessBoxContainer"><div class="guess-box">{letter.letter}</div></div>
         {/each}
     </div>
 {/if}
@@ -269,6 +259,7 @@
         <button on:click|once={resetGame}>play again (different word)</button>
     </div>
 {/if}
+<div id="bottomOfPage"></div>
 {#if invalid}
     <p style="color:red">Invalid Word!</p>
 {/if}
@@ -286,21 +277,31 @@
         justify-content: center;
     }
     .letterPrev {
-        border-color: gray;
+        border-color: rgb(217, 217, 217);
         border-style: solid;
         padding: 10px;
+        width: 20px;
+    }
+    #letterPrevContainer {
+        padding: 1px;
     }
     .currentGuessBoxes {
         display: flex;
         width: 100%;
         justify-content: center;
+        
+    }
+    #guessBoxContainer {
+        padding: 1px;
     }
     .guess-box {
-        border-color: black;
+        border-color: rgb(255, 255, 255);
         border-style: solid;
         padding: 10px;
+        width: 20px;
+        height: 20px;
     }
     .winner {
-        color: green;
+        color: rgb(107, 202, 107);
     }
 </style>
