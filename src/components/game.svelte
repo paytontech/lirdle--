@@ -1,34 +1,36 @@
-<script>
+<script lang="ts">
     import { WORDS } from "../words.js";
     import DeviceDetector from "svelte-device-detector"; /*courtesy of https://github.com/Morgenstern2573/wordle_clone*/
     import { initializeApp } from "firebase/app";
     import { getFirestore, collection, getDoc, setDoc, doc, Timestamp } from "firebase/firestore";
     import moment from 'moment-es6';
     import { animateScroll } from 'svelte-scrollto-element'
-
-    let gameData = {
-        wordToGuess: "CRANE" /*example word. will fetch later.*/,
-        guessCount: 0,
-        guesses: [
-            /*
-            example:
-                {word:'WATER',letters:[
-                    {letter:'w','placement':0,'state':0 (0 being not at all correct, 1 being incorrect placement, 2 being corrent placement.)}
-                ]}
-            */
-        ],
-        currentGuess: {
-            letters: [
-                { letter: "" },
-                { letter: "" },
-                { letter: "" },
-                { letter: "" },
-                { letter: "" },
-            ],
-            index: 0,
-        },
-        winner: false,
-    };
+    import { Guess } from '../classes/Guess.ts'
+    import { Game } from "../classes/Game.ts";
+    // let gameData = {
+    //     wordToGuess: "CRANE" /*example word. will fetch later.*/,
+    //     guessCount: 0,
+    //     guesses: [
+    //         /*
+    //         example:
+    //             {word:'WATER',letters:[
+    //                 {letter:'w','placement':0,'state':0 (0 being not at all correct, 1 being incorrect placement, 2 being corrent placement.)}
+    //             ]}
+    //         */
+    //     ],
+    //     currentGuess: {
+    //         letters: [
+    //             { letter: "" },
+    //             { letter: "" },
+    //             { letter: "" },
+    //             { letter: "" },
+    //             { letter: "" },
+    //         ],
+    //         index: 0,
+    //     },
+    //     winner: false,
+    // };
+    let gameData = new Game('crane')
     getWord()
     async function getWord() {
         const firebaseConfig = {
